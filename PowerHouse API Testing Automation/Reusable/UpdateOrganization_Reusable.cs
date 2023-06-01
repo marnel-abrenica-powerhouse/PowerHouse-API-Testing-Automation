@@ -3,32 +3,31 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json;
 
 
 namespace PowerHouse_Api
 {
-    [TestFixture]
-    [Parallelizable]
-    public class GetJiraIssues
+
+
+    public class UpdateOrganization_Reusable
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string Description;
+        public static string OrgName;
+        public static string Website;
+        public static string ReturnString;
         public static int OrgId;
+
 
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            OrgId = int.Parse(a.GetConfig_("orgId"));
-            ProjectId = b.StringGenerator();
-
-
         }
 
-        [Test]
         public async Task MainTest()
         {
             Precondition();
@@ -36,25 +35,27 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query GetJiraIssues($filters: GetJiraIssuesInput!) {
-  getJiraIssues(filters: $filters) {
-    items {
-      id
-    }
-    totalItems
+mutation UpdateOrganization($organizationId: Float!, $data: IUpdateOrganizationDTO!) {
+  updateOrganization(organization_id: $organizationId, data: $data) {
+    created_at
+    description
+    name
+    organization_id
+    updated_at
+    website
   }
 }
     ",
                 Variables = new
                 {
-                    filters = new {
-                        organization_id = OrgId,
-                        skip = 0,
-                        take = 30,
-                        search = "test"
-                    } 
+                    organizationId = OrgId,
+                    data =  new {
+                        description = Description,
+                        name = OrgName,
+                        website = Website
+                    }
                 }
-            };
+    };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -69,10 +70,19 @@ query GetJiraIssues($filters: GetJiraIssuesInput!) {
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
-
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
         }
 
+        public string Invoke(int orgId, string orgName, string description, string website)
+        {
+            OrgId = orgId;
+            OrgName = orgName;
+            Description = description;
+            Website = website;
+            MainTest().Wait();
+            return ReturnString;    
+        }
     }
 
 }

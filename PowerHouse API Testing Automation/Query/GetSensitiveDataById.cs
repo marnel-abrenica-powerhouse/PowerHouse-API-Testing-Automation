@@ -3,6 +3,7 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json.Linq;
 
 namespace PowerHouse_Api
 {
@@ -10,9 +11,17 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class GetSensitiveDataById
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ProjectName;
+        public static string ProjectOverview;
+        public static string SensitiveDataName;
+        public static string Username;
+        public static string Password;
+        public static string InfoDescription;
+        public static string Key;
+        public static string SensitiveDataId;
+        public static int ProjectId;
 
         public void Precondition()
         {
@@ -20,9 +29,22 @@ namespace PowerHouse_Api
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            ProjectId = b.StringGenerator();
+            ProjectName = b.StringGenerator("alphanumeric", 15);
+            ProjectOverview = b.StringGenerator("alphanumeric", 50);
+            SensitiveDataName = b.StringGenerator("alphanumeric", 15);
+            Username = b.StringGenerator("alphanumeric", 10);
+            Password = b.StringGenerator("alphanumeric", 10);
+            Key = b.StringGenerator("alphanumeric", 15);
+            InfoDescription = b.StringGenerator("alphanumeric", 50);
 
 
+            string returnProjectId = new CreateProject_Reusable().Invoke(ProjectName, ProjectOverview);
+            JObject objProjectId = JObject.Parse(returnProjectId);
+            ProjectId = objProjectId["createProject"]["id"].Value<int>();
+
+            string returnSensitiveDataId = new CreateSensitiveData_Reusable().Invoke(SensitiveDataName, ProjectId, Username, Password, Key, InfoDescription);
+            JObject objSensitiveDataId = JObject.Parse(returnSensitiveDataId);
+            SensitiveDataId = objSensitiveDataId["createSensitiveData"]["id"].ToString();
         }
 
         [Test]
@@ -33,29 +55,29 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query GetSensitiveDataById($getSensitiveDataByIdId: String!) {
-  getSensitiveDataById(id: $getSensitiveDataByIdId) {
-    createdAt
-    data {
-      description
-      key
-      password
-      username
-    }
-    id
-    name
-    project_id
-    type
-    updatedAt
-  }
-}
-    ",
+                query GetSensitiveDataById($getSensitiveDataByIdId: String!) {
+                getSensitiveDataById(id: $getSensitiveDataByIdId) {
+                createdAt
+                data {
+                    description
+                    key
+                    password
+                    username
+                    }
+                id
+                name
+                project_id
+                type
+                updatedAt
+                }
+                }
+                ",
                 Variables = new
                 {
-                    getSensitiveDataByIdId = "7aa09041-910d-47df-9e0e-db0ff4d95155"
+                    getSensitiveDataByIdId = SensitiveDataId
 
                 }
-    };
+            };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -72,6 +94,11 @@ query GetSensitiveDataById($getSensitiveDataByIdId: String!) {
 
             Console.WriteLine(response.Data);
 
+        }
+
+        public void PostTest()
+        {
+            new DeleteSensitiveData_Reusable().Invoke(SensitiveDataId);
         }
 
     }
