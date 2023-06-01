@@ -29,7 +29,6 @@ namespace PowerHouse_Api
         public static int TaskId;
         public static int MaxTime;
         public static int TimeEstimate;
-        public static decimal MarkUpPrice;
         public static decimal NewBidPrice;
         public static int BidId;
         public static int TransactionId;
@@ -50,10 +49,8 @@ namespace PowerHouse_Api
             Payout = int.Parse( b.StringGenerator("allnumbers", 4));
             MaxTime = int.Parse(b.StringGenerator("allnumbers", 3));
             TimeEstimate = int.Parse(b.StringGenerator("allnumbers", 3));
-            decimal markUpPercentage = 0.10m;
-            MarkUpPrice = Payout * markUpPercentage;
-            NewBidPrice = Payout - MarkUpPrice - 1;
-            
+            NewBidPrice = new CalculateBid().GetMaxBid(Payout-1);
+
 
             string returnOrg = new CreateProject_Reusable().Invoke(ProjectName, ProjectOverview);
             JObject orgObj = JObject.Parse(returnOrg);

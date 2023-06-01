@@ -23,6 +23,7 @@ namespace PowerHouse_Api
         public static int Payout;
         public static int MaxTime;
         public static int TimeEstimate;
+        public static int NewBidPrice;
 
 
 
@@ -39,6 +40,7 @@ namespace PowerHouse_Api
             Payout = int.Parse(b.StringGenerator("allnumbers", 4));
             MaxTime = int.Parse(b.StringGenerator("allnumbers", 2));
             TimeEstimate = int.Parse(b.StringGenerator("allnumbers", 2));
+            NewBidPrice = new CalculateBid().GetMaxBid(Payout);
 
             string returnString = new CreateProject_Reusable().Invoke(ProjectName, ProjectOverview);
             JObject obj = JObject.Parse(returnString);
@@ -111,14 +113,14 @@ mutation CreateTask($name: String!, $description: String!, $projectId: Float!, $
             string responseName = obj["createTask"]["name"].ToString();
             string responseDescription = obj["createTask"]["description"].ToString();
             int responseProjectId = obj["createTask"]["project_id"].Value<int>();
-            int responsePayout = obj["createTask"]["payout"].Value<int>();
             int responseMaxTime = obj["createTask"]["max_time"].Value<int>();
             int responseTimeEstimate = obj["createTask"]["time_estimate"].Value<int>();
+
+
 
             if (Name != responseName || 
                 Description != responseDescription || 
                 ProjectId != responseProjectId  ||
-                Payout != responsePayout ||
                 MaxTime != responseMaxTime ||
                 TimeEstimate != responseTimeEstimate) 
             {
