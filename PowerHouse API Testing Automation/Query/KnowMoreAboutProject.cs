@@ -3,6 +3,7 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json.Linq;
 
 namespace PowerHouse_Api
 { 
@@ -10,9 +11,11 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class KnowMoreAboutProject
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ProjectName;
+        public static string ProjectOverview;
+        public static int ProjectId;
 
         public void Precondition()
         {
@@ -20,9 +23,12 @@ namespace PowerHouse_Api
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            ProjectId = b.StringGenerator();
+            ProjectName = b.StringGenerator("alphanumeric", 15);
+            ProjectOverview = b.StringGenerator("alphanumeric", 50);
 
-
+            string returnProjectId = new CreateProject_Reusable().Invoke(ProjectName, ProjectOverview);
+            JObject objProjectId = JObject.Parse(returnProjectId);
+            ProjectId = objProjectId["createProject"]["id"].Value<int>();
         }
 
         [Test]
@@ -39,7 +45,7 @@ query Query($projectId: Float!, $question: String!) {
     ",
                 Variables = new
                 {
-                    projectId = 69,
+                    projectId = ProjectId,
                     question = "explain the project"
                 }
     };
@@ -58,9 +64,13 @@ query Query($projectId: Float!, $question: String!) {
             }
 
             Console.WriteLine(response.Data);
-
+            PostTest();
         }
 
+        public void PostTest()
+        {
+            new DeleteProject_Reusable().Invoke(ProjectId);
+        }
     }
 
 }

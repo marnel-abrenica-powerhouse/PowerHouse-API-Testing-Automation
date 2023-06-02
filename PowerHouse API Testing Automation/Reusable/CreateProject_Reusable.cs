@@ -100,6 +100,10 @@ mutation CreateProject($name: String!, $overview: String!, $stackId: Float, $pro
             MainTest().Wait();
             return ReturnString;            
         }
+
+        /* sample return string
+         *     {"createProject":{"id":502,"name":"Crcdf48i2w","tech_lead":{"user_id":42},"overview":"8m84rdxar2b9rq3r4ybcda01kmrxloz6p5txoujms81q81c5cx","stacks":{"id":1},"project_manager":{"user_id":42},"project_owner":{"user_id":42}}}
+         */
     }
 
 }

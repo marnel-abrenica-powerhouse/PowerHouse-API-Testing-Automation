@@ -101,6 +101,10 @@ mutation CreateSensitiveData($data: ICreateSensitiveDataDTO!) {
             MainTest().Wait();
             return ReturnString;
         }
+
+        /*sample response
+         *     {"createSensitiveData":{"data":{"description":"B8n93qj75iom1oduyroyi0v9wvvla43usvagobjufdemrrov8c","key":"Hcszqzpkfdlnxk5","password":"Kjvy86izyt8kq7v","username":"5jd63stdzhsuhxf"},"createdAt":"2023-06-02T17:34:22.851Z","id":"2c6012d2-d47e-4e12-85da-e52b7733f1a6","name":"1esygcnnymf13i2","project_id":503,"type":"CREDENTIAL","updatedAt":"2023-06-02T17:34:22.851Z"}}
+         */
     }
 
 }
