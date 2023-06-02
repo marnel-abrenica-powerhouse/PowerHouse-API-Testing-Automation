@@ -3,7 +3,6 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
-using System.Security.Cryptography;
 
 namespace PowerHouse_Api
 {
@@ -48,7 +47,7 @@ query GetJiraIssues($filters: GetJiraIssuesInput!) {
                 Variables = new
                 {
                     filters = new {
-                        organization_id = 62,
+                        organization_id = OrgId,
                         skip = 0,
                         take = 30,
                         search = "test"

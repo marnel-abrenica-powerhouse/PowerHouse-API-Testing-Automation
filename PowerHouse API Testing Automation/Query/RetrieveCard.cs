@@ -4,25 +4,28 @@ using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
 
+
 namespace PowerHouse_Api
 {
     [TestFixture]
     [Parallelizable]
     public class RetrieveCard
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string StripeToken;
+        public static int OrgId;
+
 
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            ProjectId = b.StringGenerator();
+            OrgId = int.Parse(a.GetConfig_("orgId"));
 
-
+            StripeToken = new StripePayment().Invoke();
+            new AddCardToOrganization_Reusable().Invoke(StripeToken, OrgId);
         }
 
         [Test]
@@ -50,7 +53,7 @@ query RetrieveCard($retrieveCardId: String!) {
     ",
                 Variables = new
                 {
-                    retrieveCardId = "pm_1N9FXqBH08opzuAiGdGSYb47"
+                    retrieveCardId = StripeToken
                 }
     };
 
@@ -68,9 +71,13 @@ query RetrieveCard($retrieveCardId: String!) {
             }
 
             Console.WriteLine(response.Data);
-
+            PostTest();
         }
 
+        public void PostTest()
+        {
+            new DeleteCard_Reusable().Invoke(StripeToken);
+        }
     }
 
 }
