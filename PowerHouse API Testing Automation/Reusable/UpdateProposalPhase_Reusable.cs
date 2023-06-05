@@ -4,22 +4,32 @@ using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
 using Newtonsoft.Json;
 
+
 namespace PowerHouse_Api
 {
 
-    public class User_Reusable
+
+    public class UpdateProposalPhase_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
         public static string ReturnString;
+        public static int ProposalPhaseId;
+        public static int UpdatedDurationSpan;
+        public static int UpdatedMargin;
+        public static string UpdatedPhaseTitle;
+
+
 
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
         }
+
+
+
 
         public async Task MainTest()
         {
@@ -28,41 +38,40 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query User {
-  user {
-    id: user_id
-    googleId: google_id
-    email
-    organizations {
-      id: organization_id
-      name
+mutation UpdateProposalPhase($data: UpdateProposalPhaseInput!, $updateProposalPhaseId: Float!) {
+  updateProposalPhase(data: $data, id: $updateProposalPhaseId) {
+    amount_paid
+    created_at
+    duration_span
+    duration_type
+    hard_cost
+    id
+    margin
+    markup_cost
+    payment_status
+    phase_tasks {
+      id
     }
-    roles {
-      role {
-        name
-        id: role_id
-      }
-    }
-    profile {
-      firstName: first_name
-      lastName: last_name
-      avatar
-      country
-      timezone
-      linkedinUrl: linkedin_url
-      expertise {
-        id
-        name: stack_name
-      }
-    }
+    proposal_id
+    status
+    title
+    total_cost
+    updated_at
   }
 }
     ",
                 Variables = new
                 {
-                    
+                    data = new {
+                    duration_span = UpdatedDurationSpan,
+                    duration_type = "DAY",
+                    margin = UpdatedMargin,
+                    status = "INPROGRESS",
+                    title = UpdatedPhaseTitle
+                    },
+                    updateProposalPhaseId = ProposalPhaseId
                 }
-    };
+            };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -79,11 +88,14 @@ query User {
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
-
         }
 
-        public string Invoke()
+        public string Invoke(int updatedDurationSpan, int updatedMargin, string updatedPhaseTitle, int updatedProposalPhaseId)
         {
+            UpdatedDurationSpan = updatedDurationSpan;
+            UpdatedMargin = updatedMargin;
+            UpdatedPhaseTitle = updatedPhaseTitle;
+            ProposalPhaseId = updatedProposalPhaseId;
             MainTest().Wait();
             return ReturnString;
         }

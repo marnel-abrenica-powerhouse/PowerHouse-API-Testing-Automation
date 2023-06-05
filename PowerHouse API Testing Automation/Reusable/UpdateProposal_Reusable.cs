@@ -6,20 +6,26 @@ using Newtonsoft.Json;
 
 namespace PowerHouse_Api
 {
-
-    public class User_Reusable
+    public class UpdateProposal_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
         public static string ReturnString;
+        public static string ClientEmail;
+        public static string ClientName;
+        public static int UserId;
+        public static int ProposalId;
+        public static string UpdatedProposalName;
+        public static string UpdatedProposalNotes;
+
 
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
         }
+
 
         public async Task MainTest()
         {
@@ -28,41 +34,32 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query User {
-  user {
-    id: user_id
-    googleId: google_id
-    email
-    organizations {
-      id: organization_id
-      name
-    }
-    roles {
-      role {
-        name
-        id: role_id
-      }
-    }
-    profile {
-      firstName: first_name
-      lastName: last_name
-      avatar
-      country
-      timezone
-      linkedinUrl: linkedin_url
-      expertise {
-        id
-        name: stack_name
-      }
-    }
+mutation UpdateProposal($data: IUpdateProposalDTO!, $updateProposalId: Float!) {
+  updateProposal(data: $data, id: $updateProposalId) {
+    client_email
+    client_name
+    client_user_id
+    name
+    notes
+    status
+    id
   }
 }
     ",
                 Variables = new
                 {
-                    
+                    data = new 
+                        {
+                        client_email = ClientEmail,
+                        client_name = ClientName,
+                        client_user_id = UserId,
+                        name = UpdatedProposalName,
+                        notes = UpdatedProposalNotes,
+                        status = "INPROGRESS"
+                    },
+                    updateProposalId = ProposalId
                 }
-    };
+            };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -79,15 +76,18 @@ query User {
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
-
         }
 
-        public string Invoke()
+        public string Invoke(string clientEmail, string clientName, int userId, string updatedProposalName, string updatedProposalNotes)
         {
+            ClientEmail = clientEmail;
+            ClientName = clientName;
+            UserId = userId;
+            UpdatedProposalName = updatedProposalName;
+            UpdatedProposalNotes = updatedProposalNotes;
             MainTest().Wait();
             return ReturnString;
         }
-
     }
 
 }

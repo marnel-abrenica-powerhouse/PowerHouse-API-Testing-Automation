@@ -4,22 +4,30 @@ using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
 using Newtonsoft.Json;
 
+
 namespace PowerHouse_Api
 {
 
-    public class User_Reusable
+    public class UpdateProposalPhaseTask_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
         public static string ReturnString;
+        public static int ProposalPhaseTaskId;
+        public static string UpdatedTaskTitle;
+        public static int UpdatedTaskHardCost;
+        public static string UpdatedTaskDescription;
+
 
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
         }
+
+
+
 
         public async Task MainTest()
         {
@@ -28,41 +36,31 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query User {
-  user {
-    id: user_id
-    googleId: google_id
-    email
-    organizations {
-      id: organization_id
-      name
-    }
-    roles {
-      role {
-        name
-        id: role_id
-      }
-    }
-    profile {
-      firstName: first_name
-      lastName: last_name
-      avatar
-      country
-      timezone
-      linkedinUrl: linkedin_url
-      expertise {
-        id
-        name: stack_name
-      }
-    }
+mutation UpdateProposalPhaseTask($data: UpdateProposalPhaseTaskInput!, $updateProposalPhaseTaskId: Float!) {
+  updateProposalPhaseTask(data: $data, id: $updateProposalPhaseTaskId) {
+    created_at
+    description
+    hard_cost
+    id
+    markup_cost
+    phase_id
+    title
+    total_cost
+    updated_at
   }
 }
     ",
                 Variables = new
                 {
-                    
+                    data = new 
+                        {
+                        title = UpdatedTaskTitle,
+                        hard_cost = UpdatedTaskHardCost,
+                        description = UpdatedTaskDescription
+                        },
+                    updateProposalPhaseTaskId = ProposalPhaseTaskId
                 }
-    };
+            };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -79,15 +77,17 @@ query User {
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
-
         }
 
-        public string Invoke()
+        public string Invoke(string updatedTaskTitle, int updatedTaskHardCost, string updatedTaskDescription, int proposalPhaseTaskId)
         {
+            UpdatedTaskTitle = updatedTaskTitle;
+            UpdatedTaskHardCost = updatedTaskHardCost;
+            UpdatedTaskDescription = updatedTaskDescription;
+            ProposalPhaseTaskId = proposalPhaseTaskId;
             MainTest().Wait();
             return ReturnString;
         }
-
     }
 
 }

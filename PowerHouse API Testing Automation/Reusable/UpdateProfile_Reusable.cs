@@ -4,18 +4,24 @@ using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
 using Newtonsoft.Json;
 
+
 namespace PowerHouse_Api
 {
 
-    public class User_Reusable
+    public class UpdateProfile_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
         public static string ReturnString;
+        public static string Bio;
+        public static string FirstName;
+        public static string LastName;
+        public static string LinkedInUrl;
+
+
 
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
@@ -28,39 +34,40 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query User {
-  user {
-    id: user_id
-    googleId: google_id
-    email
-    organizations {
-      id: organization_id
-      name
+mutation UpdateProfile($data: IUpdateProfileDTO, $avatarFile: Upload) {
+  updateProfile(data: $data, avatar_file: $avatarFile) {
+    avatar
+    bio
+    country
+    created_at
+    expertise {
+      id
     }
-    roles {
-      role {
-        name
-        id: role_id
-      }
-    }
-    profile {
-      firstName: first_name
-      lastName: last_name
-      avatar
-      country
-      timezone
-      linkedinUrl: linkedin_url
-      expertise {
-        id
-        name: stack_name
-      }
+    first_name
+    last_name
+    linkedin_url
+    profile_id
+    timezone
+    updated_at
+    user {
+      user_id
     }
   }
 }
     ",
                 Variables = new
                 {
-                    
+                    data = new 
+                        {
+                        bio = Bio,
+                        country = "Philippines (the)",
+                        expertisies = new[] { "Angular", "Nest" },
+                        first_name = FirstName,
+                        last_name = LastName,
+                        linkedin_url = LinkedInUrl,
+                        timezone = "Asia/Manila"
+                    }
+        
                 }
     };
 
@@ -79,15 +86,17 @@ query User {
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
-
         }
 
-        public string Invoke()
+        public string Invoke(string bio, string firstName, string lastName, string linkedInUrl)
         {
+            Bio = bio;
+            FirstName = firstName;
+            LastName = lastName;
+            LinkedInUrl = linkedInUrl;
             MainTest().Wait();
-            return ReturnString;
+            return ReturnString; 
         }
-
     }
 
 }

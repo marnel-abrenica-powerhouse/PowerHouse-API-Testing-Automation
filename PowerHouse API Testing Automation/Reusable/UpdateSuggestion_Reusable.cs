@@ -1,17 +1,24 @@
 ﻿using GraphQL;
 using GraphQL.Client.Http;
-using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json;
+
+
 
 namespace PowerHouse_Api
-{
-    [TestFixture]
-    [Parallelizable]
-    public class AccountBalance
+{ 
+
+
+    public class UpdateSuggestion_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
+        public static string ReturnString;
+        public static int SuggestionId;
+        public static string UpdatedSuggestion;
+        public static string UpdatedSuggestionTitle;
+
 
         public void Precondition()
         {
@@ -20,7 +27,8 @@ namespace PowerHouse_Api
             BaseUrl = a.GetConfig_("baseUrl");
         }
 
-        [Test]
+
+
         public async Task MainTest()
         {
             Precondition();
@@ -28,13 +36,37 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-                    query Query {
-                    accountBalance
-                                    }
+mutation UpdateSuggestion($data: UpdateSuggestionInput!, $suggestionId: Float!) {
+  updateSuggestion(data: $data, suggestion_id: $suggestionId) {
+    association
+    project {
+      project_id
+    }
+    project_id
+    status
+    suggestion
+    suggestion_id
+    task {
+      task_id
+    }
+    task_id
+    title
+    user {
+      user_id
+    }
+    user_id
+  }
+}
     ",
                 Variables = new
                 {
-                    
+
+                    suggestionId = SuggestionId,
+                    data = new 
+                        {
+                        suggestion = UpdatedSuggestion,
+                        title = UpdatedSuggestionTitle
+                        }
                 }
             };
 
@@ -51,10 +83,18 @@ namespace PowerHouse_Api
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
-
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
         }
 
+        public string Invoke(int suggestionId, string updatedSuggestion, string updatedSuggestionTitle)
+        {
+            SuggestionId = suggestionId;
+            UpdatedSuggestion = updatedSuggestion;
+            UpdatedSuggestionTitle = updatedSuggestionTitle;
+            MainTest().Wait();
+            return ReturnString;
+        }
     }
 
 }

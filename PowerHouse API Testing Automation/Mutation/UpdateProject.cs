@@ -3,40 +3,44 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace PowerHouse_Api
 {
     [TestFixture]
-    [Parallelizable]
-    public class FindProject
+
+    public class UpdateProject
     {
         public static string AuthToken;
         public static string BaseUrl;
-        public static int OrgId;
+        public static string ReturnString;
         public static string Name;
         public static string Overview;
-        public static int OrgMemberId;
+        public static string UpdatedName;
+        public static string UpdatedOverview;
+        public static int OrgId;
         public static int ProjectId;
 
         public void Precondition()
         {
-            Get_Update_Config a = new();
             Commands b = new();
+            Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
             OrgId = int.Parse(a.GetConfig_("orgId"));
-            Name = b.StringGenerator("alphanumeric", 10);
+            Name = b.StringGenerator("alphanumeric" ,10);
             Overview = b.StringGenerator("alphanumeric", 50);
-
-            string returnString = new OrganizationMembers_Reusable().Invoke(OrgId);
-            JObject obj = JObject.Parse(returnString);
-            OrgMemberId = obj["organizationMembers"][0]["id"].Value<int>();
+            UpdatedName = b.StringGenerator("alphanumeric", 10);
+            UpdatedOverview = b.StringGenerator("alphanumeric", 50);
 
             string returnProjectId = new CreateProject_Reusable().Invoke(Name, Overview);
             JObject objProjectId = JObject.Parse(returnProjectId);
             ProjectId = objProjectId["createProject"]["id"].Value<int>();
         }
+
+
+
 
         [Test]
         public async Task MainTest()
@@ -46,56 +50,23 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-                    query Query($projectId: Float!) {
-  findProject(project_id: $projectId) {
-    code_base_url
-    codebase
-    created_at
-    db_connection_string
-    db_type
-    hosting
+mutation UpdateProject($data: IUpdateProjectDTO!, $projectId: Float!) {
+  updateProject(data: $data, project_id: $projectId) {
     name
-    organization {
-      name
-    }
-    organization_id
     overview
-    percentage_completed
-    project {
-      name
-    }
+    organization_id
     project_id
-    project_manager {
-      email
-    }
-    project_owner {
-      email
-    }
-    project_owner_id
-    project_tasks {
-      name
-    }
-    project_type
-    stacks {
-      id
-    }
-    sub_projects {
-      name
-    }
-    tech_lead {
-      email
-    }
-    tech_lead_id
-    tech_requirements
-    total_prds
-    total_tasks
-    updated_at
   }
 }
     ",
                 Variables = new
                 {
-                    projectId = ProjectId
+                    data = new 
+                        {
+                        name= UpdatedName,
+                        overview= UpdatedOverview
+                        },
+                    projectId= ProjectId
                 }
             };
 
@@ -112,14 +83,26 @@ namespace PowerHouse_Api
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
-            PostTest();
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
+            VerifyResponse();
         }
 
-        public void PostTest()
+        public void VerifyResponse()
         {
+            JObject obj = JObject.Parse(ReturnString);
+            int responseProjectId = obj["updateProject"]["project_id"].Value<int> ();
+            string responseName = obj["updateProject"]["name"].ToString();
+            string responseOverview = obj["updateProject"]["overview"].ToString();
+
+            if (UpdatedName != responseName || UpdatedOverview != responseOverview || ProjectId != responseProjectId)
+            {
+                throw new Exception("Api return does not match");
+            }
             new DeleteProject_Reusable().Invoke(ProjectId);
         }
+
     }
 
 }

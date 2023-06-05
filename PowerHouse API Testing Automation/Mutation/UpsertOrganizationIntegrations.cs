@@ -3,22 +3,31 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json;
 
 namespace PowerHouse_Api
 {
     [TestFixture]
-    [Parallelizable]
-    public class AccountBalance
+
+    public class UpsertOrganizationIntegrations
     {
         public static string AuthToken;
         public static string BaseUrl;
+        public static string ReturnString;
+        public static int OrgId;
+
 
         public void Precondition()
         {
+            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
+            OrgId = int.Parse(a.GetConfig_("orgId"));
         }
+
+
+
 
         [Test]
         public async Task MainTest()
@@ -28,13 +37,29 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-                    query Query {
-                    accountBalance
-                                    }
+mutation UpsertOrganizationIntegrations($data: CreateOrganizationIntegrationInput!, $organizationId: Float!) {
+  upsertOrganizationIntegrations(data: $data, organization_id: $organizationId) {
+    created_at
+    id
+    jira_domain
+    jira_email
+    jira_token
+    organization_id
+    trello_key
+    trello_token
+    updated_at
+  }
+}
     ",
                 Variables = new
                 {
-                    
+                    data = new 
+                        {
+                        jira_domain = "powerhouse01",
+                        jira_email = "mabrenica.stormblue@gmail.com",
+                        jira_token = "ATATT3xFfGF0GlPrzpFrsVqv8zabWWe8tZ-xQl8h2_2OTSqXa56nBcdn9XIdUxlOEJH6kkY3FynZmk22I1-r-ChQ3BTKoVecDKqg5CMTIAm9jpvG9fPBQW7Eg0tnhtVXEsKz88BOj1f10Ezp5UDbq1GVeobt_C8pfC0CgC5pRaVHfaCs43Xl3hA=C23E108C"
+                    },
+                    organizationId = OrgId
                 }
             };
 
@@ -51,8 +76,15 @@ namespace PowerHouse_Api
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
+            PostTest();
+        }
 
+        public void PostTest()
+        {
+            string returnJiraIssues = new GetJiraIssues_Reusable().Invoke(OrgId);
         }
 
     }

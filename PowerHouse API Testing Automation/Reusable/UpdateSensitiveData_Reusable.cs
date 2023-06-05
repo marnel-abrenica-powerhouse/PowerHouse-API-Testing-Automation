@@ -4,22 +4,31 @@ using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
 using Newtonsoft.Json;
 
+
 namespace PowerHouse_Api
 {
 
-    public class User_Reusable
+
+    public class UpdateSensitiveData_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
         public static string ReturnString;
+        public static string SensitiveDataId;
+        public static string UpdatedName;
+        public static string UpdatedUsername;
+        public static string UpdatedPassword;
+        public static string UpdatedInfoDescription;
+        public static string UpdatedKey;
+
 
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
         }
+
 
         public async Task MainTest()
         {
@@ -28,41 +37,40 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query User {
-  user {
-    id: user_id
-    googleId: google_id
-    email
-    organizations {
-      id: organization_id
-      name
+mutation UpdateSensitiveData($data: IUpdateSensitiveDataDTO!, $updateSensitiveDataId: String!) {
+  updateSensitiveData(data: $data, id: $updateSensitiveDataId) {
+    createdAt
+    data {
+      description
+      key
+      password
+      username
     }
-    roles {
-      role {
-        name
-        id: role_id
-      }
-    }
-    profile {
-      firstName: first_name
-      lastName: last_name
-      avatar
-      country
-      timezone
-      linkedinUrl: linkedin_url
-      expertise {
-        id
-        name: stack_name
-      }
-    }
+    id
+    name
+    project_id
+    type
+    updatedAt
   }
 }
     ",
                 Variables = new
                 {
-                    
+                    updateSensitiveDataId = SensitiveDataId,
+                    data = new 
+                        {
+                        name = UpdatedName,
+                        sensitive_data = new 
+                            {
+                            username = UpdatedUsername,
+                            password = UpdatedPassword,
+                            key = UpdatedKey,
+                            description = UpdatedInfoDescription
+                        },
+                        type = "CREDENTIAL"
+                    }
                 }
-    };
+            };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -79,15 +87,18 @@ query User {
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
-
         }
 
-        public string Invoke()
+        public string Invoke(string sensitiveDataId, string updatedUsername, string updatedPassword, string updatedKey, string updatedDescription)
         {
+            SensitiveDataId = sensitiveDataId;
+            UpdatedUsername = updatedUsername;
+            UpdatedPassword = updatedPassword;
+            UpdatedKey = updatedKey;
+            UpdatedInfoDescription = updatedDescription;
             MainTest().Wait();
             return ReturnString;
         }
-
     }
 
 }
