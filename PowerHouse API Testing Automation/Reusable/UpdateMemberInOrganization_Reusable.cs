@@ -1,21 +1,26 @@
 ﻿using GraphQL;
 using GraphQL.Client.Http;
+using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
 using Newtonsoft.Json;
 
+
 namespace PowerHouse_Api
 {
 
-    public class User_Reusable
+    public class UpdateMemberInOrganization_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
         public static string ReturnString;
+        public static int OrgId;
+        public static string MemberType = "PO";
+        public static int MemberId;
+
 
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
@@ -28,41 +33,37 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query User {
-  user {
-    id: user_id
-    googleId: google_id
-    email
-    organizations {
-      id: organization_id
-      name
+mutation UpdateMemberInOrganization($data: IAddMemberInOrganizationDTO!, $organizationId: Float!, $memberId: Float!) {
+  updateMemberInOrganization(data: $data, organization_id: $organizationId, member_id: $memberId) {
+    activated_at
+    active
+    created_at
+    id
+    member_type
+    organization {
+      organization_id
     }
-    roles {
-      role {
-        name
-        id: role_id
-      }
+    organization_id
+    updated_at
+    user {
+      user_id
     }
-    profile {
-      firstName: first_name
-      lastName: last_name
-      avatar
-      country
-      timezone
-      linkedinUrl: linkedin_url
-      expertise {
-        id
-        name: stack_name
-      }
-    }
+    user_id
   }
 }
     ",
                 Variables = new
                 {
-                    
+                    data = new 
+                        {
+                        organization_id = OrgId,
+                        member_type = MemberType,
+                        member_id = MemberId
+                        },
+                    organizationId = OrgId,
+                    memberId = MemberId
                 }
-    };
+            };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -79,14 +80,19 @@ query User {
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
 
         }
 
-        public string Invoke()
+        public string Invoke(int orgId, string memberType, int memberId)
         {
+            OrgId = orgId;
+            MemberId = memberId;    
+            MemberType = memberType;
             MainTest().Wait();
             return ReturnString;
         }
+
 
     }
 

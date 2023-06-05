@@ -10,7 +10,7 @@ namespace PowerHouse_Api
 {
     [TestFixture]
 
-    public class CreateProposalPhase
+    public class UpdateProposalPhase
     {
         public static string AuthToken;
         public static string BaseUrl;
@@ -31,6 +31,11 @@ namespace PowerHouse_Api
         public static int Phase2DurationSpan;
         public static int Phase2Margin;
         public static string Phase2Title;
+        public static int ProposalPhaseId;
+        public static int UpdatedDurationSpan;
+        public static int UpdatedMargin;
+        public static string UpdatedPhaseTitle;
+
 
 
         public void Precondition()
@@ -59,10 +64,17 @@ namespace PowerHouse_Api
             Phase2DurationSpan = int.Parse(new Commands().StringGenerator("allnumbers", 2));
             Phase2Margin = int.Parse(new Commands().StringGenerator("allnumbers", 2));
             Phase2Title = new Commands().StringGenerator("allletters", 15);
+            UpdatedDurationSpan = int.Parse(new Commands().StringGenerator("allnumbers", 2));
+            UpdatedMargin = int.Parse(new Commands().StringGenerator("allnumbers", 2));
+            UpdatedPhaseTitle = new Commands().StringGenerator("allletters", 15);
 
             string returnProposalId = new CreateProposal_Reusable().Invoke(ClientEmail, ClientName, UserId, ProposalName, ProposalNotes, OrgId, DurationSpan, Margin, PhaseTitle, TaskDescription, HardCost, TaskTitle);
             JObject objProposalId = JObject.Parse(returnProposalId);
             ProposalId = objProposalId["createProposal"]["id"].Value<int>();
+
+            string returnCreateProposalPhaseId = new CreateProposalPhase_Reusable().Invoke(Phase2DurationSpan, Phase2Margin, Phase2Title, ProposalId);
+            JObject objProposalPhaseId = JObject.Parse(returnCreateProposalPhaseId);
+            ProposalPhaseId = objProposalPhaseId["createProposalPhase"]["id"].Value<int>();
         }
 
 
@@ -76,8 +88,8 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-mutation CreateProposalPhase($data: ICreateProposalPhaseDTO!, $proposalId: Float!) {
-  createProposalPhase(data: $data, proposal_id: $proposalId) {
+mutation UpdateProposalPhase($data: UpdateProposalPhaseInput!, $updateProposalPhaseId: Float!) {
+  updateProposalPhase(data: $data, id: $updateProposalPhaseId) {
     amount_paid
     created_at
     duration_span
@@ -87,6 +99,9 @@ mutation CreateProposalPhase($data: ICreateProposalPhaseDTO!, $proposalId: Float
     margin
     markup_cost
     payment_status
+    phase_tasks {
+      id
+    }
     proposal_id
     status
     title
@@ -98,12 +113,13 @@ mutation CreateProposalPhase($data: ICreateProposalPhaseDTO!, $proposalId: Float
                 Variables = new
                 {
                     data = new {
-                    duration_span = Phase2DurationSpan,
+                    duration_span = UpdatedDurationSpan,
                     duration_type = "DAY",
-                    margin = Phase2Margin,
-                    title = Phase2Title
+                    margin = UpdatedMargin,
+                    status = "INPROGRESS",
+                    title = UpdatedPhaseTitle
                     },
-                    proposalId = ProposalId
+                    updateProposalPhaseId = ProposalPhaseId
                 }
             };
 
@@ -122,28 +138,29 @@ mutation CreateProposalPhase($data: ICreateProposalPhaseDTO!, $proposalId: Float
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
             VerifyResponse();
         }
 
         public void VerifyResponse()
         {
             JObject obj = JObject.Parse(ReturnString);
-            int durationSpan = obj["createProposalPhase"]["duration_span"].Value<int>();
-            int margin = obj["createProposalPhase"]["margin"].Value<int>();
-            int proposalId = obj["createProposalPhase"]["proposal_id"].Value<int>();
-            string proposalTitle = obj["createProposalPhase"]["title"].ToString();
+            int udpatedDurationSpan = obj["updateProposalPhase"]["duration_span"].Value<int>();
+            int updatedMargin = obj["updateProposalPhase"]["margin"].Value<int>();
+            int proposalPhaseId = obj["updateProposalPhase"]["id"].Value<int>();
+            string updatedProposalTitle = obj["updateProposalPhase"]["title"].ToString();
 
             if (
-                   durationSpan != Phase2DurationSpan
-                || margin!= Phase2Margin
-                || proposalId != ProposalId
-                || proposalTitle != Phase2Title
+                   udpatedDurationSpan != UpdatedDurationSpan
+                || updatedMargin!= UpdatedMargin
+                || proposalPhaseId != ProposalPhaseId
+                || updatedProposalTitle != UpdatedPhaseTitle
 
                 )
             {
                 throw new Exception("Api return does not match");
             }
-            new DeleteProposal_Reusable().Invoke(proposalId);
+            new DeleteProposal_Reusable().Invoke(ProposalId);
         }
 
     }

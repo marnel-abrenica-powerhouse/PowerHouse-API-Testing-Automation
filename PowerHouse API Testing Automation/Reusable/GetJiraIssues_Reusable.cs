@@ -1,17 +1,18 @@
 ﻿using GraphQL;
 using GraphQL.Client.Http;
-using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
+using Newtonsoft.Json;
 using PowerHouse_API_Testing_Automation.AppManager;
 
 namespace PowerHouse_Api
 {
-    [TestFixture]
-    [Parallelizable]
-    public class AccountBalance
+
+    public class GetJiraIssues_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
+        public static string ReturnString;
+        public static int OrgId;
 
         public void Precondition()
         {
@@ -20,7 +21,7 @@ namespace PowerHouse_Api
             BaseUrl = a.GetConfig_("baseUrl");
         }
 
-        [Test]
+
         public async Task MainTest()
         {
             Precondition();
@@ -28,13 +29,23 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-                    query Query {
-                    accountBalance
-                                    }
+query GetJiraIssues($filters: GetJiraIssuesInput!) {
+  getJiraIssues(filters: $filters) {
+    items {
+      id
+    }
+    totalItems
+  }
+}
     ",
                 Variables = new
                 {
-                    
+                    filters = new {
+                        organization_id = OrgId,
+                        skip = 0,
+                        take = 30,
+                        search = "test"
+                    } 
                 }
             };
 
@@ -51,10 +62,17 @@ namespace PowerHouse_Api
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
 
         }
 
+        public string Invoke(int orgId)
+        {
+            OrgId = orgId;
+            MainTest().Wait();
+            return ReturnString;
+        }
     }
 
 }

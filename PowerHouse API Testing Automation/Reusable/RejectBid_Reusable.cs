@@ -1,17 +1,19 @@
 ﻿using GraphQL;
 using GraphQL.Client.Http;
-using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json;
 
 namespace PowerHouse_Api
 {
-    [TestFixture]
-    [Parallelizable]
-    public class AccountBalance
+
+    public class RejectBid_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
+        public static string ReturnString;
+        public static int BidId;
+
 
         public void Precondition()
         {
@@ -20,7 +22,8 @@ namespace PowerHouse_Api
             BaseUrl = a.GetConfig_("baseUrl");
         }
 
-        [Test]
+
+
         public async Task MainTest()
         {
             Precondition();
@@ -28,15 +31,32 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-                    query Query {
-                    accountBalance
-                                    }
+mutation RejectBid($bidId: Float!) {
+  rejectBid(bid_id: $bidId) {
+    amount
+    created_at
+    id
+    status
+    task {
+      task_id
+      transaction {
+        id
+      }
+    }
+    task_id
+    updated_at
+    user {
+      user_id
+    }
+    user_id
+  }
+}
     ",
                 Variables = new
                 {
-                    
+                    bidId = BidId
                 }
-            };
+    };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -51,8 +71,15 @@ namespace PowerHouse_Api
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
+        }
 
+        public string Invoke(int bidId)
+        {
+            BidId = bidId;
+            MainTest().Wait();
+            return ReturnString;
         }
 
     }

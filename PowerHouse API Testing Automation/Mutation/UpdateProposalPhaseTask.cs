@@ -10,7 +10,7 @@ namespace PowerHouse_Api
 {
     [TestFixture]
 
-    public class CreateProposalPhase
+    public class UpdateProposalPhaseTask
     {
         public static string AuthToken;
         public static string BaseUrl;
@@ -31,6 +31,14 @@ namespace PowerHouse_Api
         public static int Phase2DurationSpan;
         public static int Phase2Margin;
         public static string Phase2Title;
+        public static int PhaseId;
+        public static string Task2Title;
+        public static string Task2Description;
+        public static int Task2HardCost;
+        public static int ProposalPhaseTaskId;
+        public static string UpdatedTaskTitle;
+        public static int UpdatedTaskHardCost;
+        public static string UpdatedTaskDescription;
 
 
         public void Precondition()
@@ -55,14 +63,28 @@ namespace PowerHouse_Api
             PhaseTitle = new Commands().StringGenerator("allletters", 15);
             TaskDescription = new Commands().StringGenerator("alphanumeric", 100);
             HardCost = int.Parse(new Commands().StringGenerator("allnumbers", 2));
+            Task2HardCost = int.Parse(new Commands().StringGenerator("allnumbers", 2));
             TaskTitle = new Commands().StringGenerator("allletters", 15);
             Phase2DurationSpan = int.Parse(new Commands().StringGenerator("allnumbers", 2));
             Phase2Margin = int.Parse(new Commands().StringGenerator("allnumbers", 2));
             Phase2Title = new Commands().StringGenerator("allletters", 15);
+            Task2Title = new Commands().StringGenerator("allletters", 15);
+            Task2Description = new Commands().StringGenerator("alphanumeric", 100);
+            UpdatedTaskTitle = new Commands().StringGenerator("allletters", 15);
+            UpdatedTaskHardCost = int.Parse(new Commands().StringGenerator("allnumbers", 2));
+            UpdatedTaskDescription = new Commands().StringGenerator("alphanumeric", 100);
 
             string returnProposalId = new CreateProposal_Reusable().Invoke(ClientEmail, ClientName, UserId, ProposalName, ProposalNotes, OrgId, DurationSpan, Margin, PhaseTitle, TaskDescription, HardCost, TaskTitle);
             JObject objProposalId = JObject.Parse(returnProposalId);
             ProposalId = objProposalId["createProposal"]["id"].Value<int>();
+
+            string returnProposalPhase = new CreateProposalPhase_Reusable().Invoke(Phase2DurationSpan, Phase2Margin, Phase2Title, ProposalId);
+            JObject objPhaseId = JObject.Parse(returnProposalPhase);
+            PhaseId = objPhaseId["createProposalPhase"]["id"].Value<int>();
+
+            string returnCreateProposalPhaseTask = new CreateProposalPhaseTask_Reusable().Invoke(Task2Title, Task2HardCost, Task2Description, PhaseId);
+            JObject objCreateProposalPhaseTaskId = JObject.Parse(returnCreateProposalPhaseTask);
+            ProposalPhaseTaskId = objCreateProposalPhaseTaskId["createProposalPhaseTask"]["id"].Value<int>();    
         }
 
 
@@ -76,19 +98,14 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-mutation CreateProposalPhase($data: ICreateProposalPhaseDTO!, $proposalId: Float!) {
-  createProposalPhase(data: $data, proposal_id: $proposalId) {
-    amount_paid
+mutation UpdateProposalPhaseTask($data: UpdateProposalPhaseTaskInput!, $updateProposalPhaseTaskId: Float!) {
+  updateProposalPhaseTask(data: $data, id: $updateProposalPhaseTaskId) {
     created_at
-    duration_span
-    duration_type
+    description
     hard_cost
     id
-    margin
     markup_cost
-    payment_status
-    proposal_id
-    status
+    phase_id
     title
     total_cost
     updated_at
@@ -97,13 +114,13 @@ mutation CreateProposalPhase($data: ICreateProposalPhaseDTO!, $proposalId: Float
     ",
                 Variables = new
                 {
-                    data = new {
-                    duration_span = Phase2DurationSpan,
-                    duration_type = "DAY",
-                    margin = Phase2Margin,
-                    title = Phase2Title
-                    },
-                    proposalId = ProposalId
+                    data = new 
+                        {
+                        title = UpdatedTaskTitle,
+                        hard_cost = UpdatedTaskHardCost,
+                        description = UpdatedTaskDescription
+                        },
+                    updateProposalPhaseTaskId = ProposalPhaseTaskId
                 }
             };
 
@@ -122,28 +139,30 @@ mutation CreateProposalPhase($data: ICreateProposalPhaseDTO!, $proposalId: Float
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
             VerifyResponse();
         }
 
         public void VerifyResponse()
         {
             JObject obj = JObject.Parse(ReturnString);
-            int durationSpan = obj["createProposalPhase"]["duration_span"].Value<int>();
-            int margin = obj["createProposalPhase"]["margin"].Value<int>();
-            int proposalId = obj["createProposalPhase"]["proposal_id"].Value<int>();
-            string proposalTitle = obj["createProposalPhase"]["title"].ToString();
+            string updatedTaskDescription = obj["updateProposalPhaseTask"]["description"].ToString();
+            string updatedTaskTitle = obj["updateProposalPhaseTask"]["title"].ToString();
+            int updatedHardCost = obj["updateProposalPhaseTask"]["hard_cost"].Value<int>();
+            int proposalPhaseTaskId = obj["updateProposalPhaseTask"]["id"].Value<int>();
+
 
             if (
-                   durationSpan != Phase2DurationSpan
-                || margin!= Phase2Margin
-                || proposalId != ProposalId
-                || proposalTitle != Phase2Title
+                   updatedTaskDescription != UpdatedTaskDescription
+                || updatedTaskTitle!= UpdatedTaskTitle
+                || updatedHardCost != UpdatedTaskHardCost
+                || proposalPhaseTaskId != ProposalPhaseTaskId
 
                 )
             {
                 throw new Exception("Api return does not match");
             }
-            new DeleteProposal_Reusable().Invoke(proposalId);
+            new DeleteProposal_Reusable().Invoke(ProposalId);
         }
 
     }

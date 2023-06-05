@@ -1,17 +1,21 @@
 ﻿using GraphQL;
 using GraphQL.Client.Http;
-using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json;
 
 namespace PowerHouse_Api
 {
-    [TestFixture]
-    [Parallelizable]
-    public class AccountBalance
+
+
+    public class UpdateProject_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
+        public static string ReturnString;
+        public static string UpdatedName;
+        public static string UpdatedOverview;
+        public static int ProjectId;
 
         public void Precondition()
         {
@@ -20,7 +24,10 @@ namespace PowerHouse_Api
             BaseUrl = a.GetConfig_("baseUrl");
         }
 
-        [Test]
+
+
+
+
         public async Task MainTest()
         {
             Precondition();
@@ -28,13 +35,23 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-                    query Query {
-                    accountBalance
-                                    }
+mutation UpdateProject($data: IUpdateProjectDTO!, $projectId: Float!) {
+  updateProject(data: $data, project_id: $projectId) {
+    name
+    overview
+    organization_id
+    project_id
+  }
+}
     ",
                 Variables = new
                 {
-                    
+                    data = new 
+                        {
+                        name= UpdatedName,
+                        overview= UpdatedOverview
+                        },
+                    projectId= ProjectId
                 }
             };
 
@@ -51,8 +68,17 @@ namespace PowerHouse_Api
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
+        }
 
+        public string Invoke(string updatedName, string updatedOverview, int projectId)
+        {
+            UpdatedName = updatedName;
+            UpdatedOverview = updatedOverview;
+            ProjectId = projectId;
+            MainTest().Wait();
+            return ReturnString;
         }
 
     }
