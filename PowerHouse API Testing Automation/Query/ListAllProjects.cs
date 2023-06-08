@@ -3,6 +3,8 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace PowerHouse_Api
 {
@@ -10,9 +12,13 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class ListAllProjects
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ProjectName;
+        public static string ProjectOverview;
+        public static string ReturnString;
+        public static int ProjectId;
+        public static int OrgId;
 
         public void Precondition()
         {
@@ -20,9 +26,14 @@ namespace PowerHouse_Api
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            ProjectId = b.StringGenerator();
+            OrgId = int.Parse(a.GetConfig_("orgId"));
+            ProjectName = b.StringGenerator("allletters", 10);
+            ProjectOverview = b.StringGenerator("alphanumeric", 50);
 
-
+            string returnOrg = new CreateProject_Reusable().Invoke(ProjectName, ProjectOverview);
+            JObject orgObj = JObject.Parse(returnOrg);
+            int projectId = orgObj["createProject"]["id"].Value<int>();
+            ProjectId = projectId;
         }
 
         [Test]
@@ -84,12 +95,12 @@ query ListAllProjects($organizationId: Float, $name: String, $orderBy: OrderByIn
     ",
                 Variables = new
                 {
-                    organizationId = 62,
+                    organizationId = OrgId,
                     orderBy = new {
                     order = "asc",
                     field = "name"
-                    },
-                    name = "Shield"
+                    }
+
                 }
     };
 
@@ -106,10 +117,17 @@ query ListAllProjects($organizationId: Float, $name: String, $orderBy: OrderByIn
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
+            PostTest();
 
         }
 
+        public void PostTest()
+        {
+            new DeleteProject_Reusable().Invoke(ProjectId);
+        }
     }
 
 }

@@ -3,16 +3,17 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json;
 
 namespace PowerHouse_Api
 {
-    [TestFixture]
-    [Parallelizable]
-    public class Profile
+    public class UpsertOrganizationIntegrations_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
+        public static string ReturnString;
         public static int OrgId;
+
 
         public void Precondition()
         {
@@ -21,11 +22,10 @@ namespace PowerHouse_Api
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
             OrgId = int.Parse(a.GetConfig_("orgId"));
-
-
         }
 
-        [Test]
+
+
         public async Task MainTest()
         {
             Precondition();
@@ -33,33 +33,31 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query Profile {
-  profile {
-    first_name
-    last_name
-    avatar
-    bio
-    country
+mutation UpsertOrganizationIntegrations($data: CreateOrganizationIntegrationInput!, $organizationId: Float!) {
+  upsertOrganizationIntegrations(data: $data, organization_id: $organizationId) {
     created_at
-    expertise {
-      id
-    }
-    linkedin_url
-    profile_id
-    timezone
+    id
+    jira_domain
+    jira_email
+    jira_token
+    organization_id
+    trello_key
+    trello_token
     updated_at
-    user {
-      email
-    }
-    user_id
   }
 }
     ",
                 Variables = new
                 {
+                    data = new 
+                        {
+                        jira_domain = "powerhouse01",
+                        jira_email = "mabrenica.stormblue@gmail.com",
+                        jira_token = "ATATT3xFfGF0GlPrzpFrsVqv8zabWWe8tZ-xQl8h2_2OTSqXa56nBcdn9XIdUxlOEJH6kkY3FynZmk22I1-r-ChQ3BTKoVecDKqg5CMTIAm9jpvG9fPBQW7Eg0tnhtVXEsKz88BOj1f10Ezp5UDbq1GVeobt_C8pfC0CgC5pRaVHfaCs43Xl3hA=C23E108C"
+                    },
                     organizationId = OrgId
                 }
-    };
+            };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -74,8 +72,16 @@ query Profile {
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
 
+        }
+
+        public string Invoke(int orgId)
+        {
+            OrgId = orgId;
+            MainTest().Wait();
+            return ReturnString;
         }
 
     }

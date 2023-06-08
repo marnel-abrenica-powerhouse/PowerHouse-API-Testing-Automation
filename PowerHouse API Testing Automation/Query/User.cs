@@ -11,9 +11,9 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class User
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ReturnString;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ReturnString;
 
         public void Precondition()
         {
@@ -21,8 +21,6 @@ namespace PowerHouse_Api
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-
-
         }
 
         [Test]
@@ -85,7 +83,7 @@ query User {
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
-
+            Console.WriteLine(ReturnString);
         }
 
     }

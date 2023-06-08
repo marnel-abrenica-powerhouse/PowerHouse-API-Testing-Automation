@@ -3,27 +3,35 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace PowerHouse_Api
 {
     [TestFixture]
-    [Parallelizable]
-    public class Profile
+
+    public class ListAllCards
     {
         public static string AuthToken;
         public static string BaseUrl;
+        public static string ReturnString;
         public static int OrgId;
+        public static string Token;
+
 
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
             OrgId = int.Parse(a.GetConfig_("orgId"));
+            Token = new StripePayment().Invoke();
 
-
+            new AddCardToOrganization_Reusable().Invoke(Token, OrgId);
         }
+
+
+
 
         [Test]
         public async Task MainTest()
@@ -33,25 +41,18 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query Profile {
-  profile {
-    first_name
-    last_name
-    avatar
-    bio
-    country
+query ListAllCards($organizationId: Float!) {
+  listAllCards(organization_id: $organizationId) {
+    brand
+    card_id
     created_at
-    expertise {
-      id
-    }
-    linkedin_url
-    profile_id
-    timezone
+    exp_month
+    exp_year
+    is_default
+    last4
+    organization_id
+    provider
     updated_at
-    user {
-      email
-    }
-    user_id
   }
 }
     ",
@@ -74,7 +75,36 @@ query Profile {
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
+            PostTest();
+        }
+
+        public void PostTest()
+        {
+            JObject obj = JObject.Parse(ReturnString);
+            string card_id = obj["listAllCards"][0]["card_id"].ToString();
+            int exp_month = obj["listAllCards"][0]["exp_month"].Value<int>();
+            int exp_year = obj["listAllCards"][0]["exp_year"].Value<int>();
+            int last4 = obj["listAllCards"][0]["last4"].Value<int>();
+            int organization_id = obj["listAllCards"][0]["organization_id"].Value<int>();
+
+
+            if (
+
+                   card_id != Token 
+                || exp_month != 12 
+                || exp_year != 2035 
+                || last4 != 1111 
+                || organization_id != OrgId
+
+                )
+            {
+                throw new Exception("Api return does not match");
+            }
+
+            new DeleteCard_Reusable().Invoke(Token);
 
         }
 

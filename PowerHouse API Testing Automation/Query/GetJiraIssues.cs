@@ -7,12 +7,11 @@ using PowerHouse_API_Testing_Automation.AppManager;
 namespace PowerHouse_Api
 {
     [TestFixture]
-    [Parallelizable]
     public class GetJiraIssues
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ProjectId;
         public static int OrgId;
 
         public void Precondition()

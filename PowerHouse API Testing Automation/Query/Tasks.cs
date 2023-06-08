@@ -3,6 +3,8 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace PowerHouse_Api
 {
@@ -10,9 +12,18 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class Tasks
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ReturnString;
+        public static string TaskName;
+        public static string TaskDescription;
+        public static string ProjectName;
+        public static string ProjectOverview;
+        public static int TaskId;
+        public static int ProjectId;
+        public static int Payout;
+        public static int MaxTime;
+        public static int TimeEstimate;
 
         public void Precondition()
         {
@@ -20,8 +31,23 @@ namespace PowerHouse_Api
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            ProjectId = b.StringGenerator();
+            TaskName = b.StringGenerator("allletters", 10);
+            TaskDescription = b.StringGenerator("alphanumeric", 50);
+            Payout = int.Parse(b.StringGenerator("allnumbers", 4));
+            MaxTime = int.Parse(b.StringGenerator("allnumbers", 3));
+            TimeEstimate = int.Parse(b.StringGenerator("allnumbers", 3));
 
+            string returnOrg = new CreateProject_Reusable().Invoke(ProjectName, ProjectOverview);
+            JObject orgObj = JObject.Parse(returnOrg);
+            int projectId = orgObj["createProject"]["id"].Value<int>();
+            ProjectId = projectId;
+
+            string returnString = new CreateTask_Reusable().Invoke(TaskName, TaskDescription, ProjectId, Payout, MaxTime, TimeEstimate);
+            JObject obj = JObject.Parse(returnString);
+            int taskId = obj["createTask"]["task_id"].Value<int>();
+            TaskId = taskId;
+
+            new PublishTasksToMarketplace_Reusable().Invoke(TaskId);
 
         }
 
@@ -33,50 +59,32 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query Tasks {
-  tasks {
+query Tasks($assignee: FilterTask, $taskStatus: TaskStatus) {
+  tasks(
+    filters: {assignee: $assignee, bring_expired: true, task_status: $taskStatus}
+  ) {
+    id: task_id
     name
-    ETA
-    base_cost
-    bids {
-      id
-    }
-    complexity_level
-    created_at
-    description
-    end_date
-    end_date_to_bid
-    lowest_bid
-    markup_cost
-    max_time
-    notion_link
-    parent_id
-    payout
+    lowestBid: lowest_bid
+    maxTime: max_time
+    timeEstimate: time_estimate
+    createdAt: created_at
     project {
-      name
+      stacks {
+        name: stack_name
+      }
     }
-    project_id
-    remaining_time_to_start
-    spent_time
-    start_date
-    status
-    task_id
-    task_sales_price
-    task_type
-    time_estimate
-    total_bids
-    transaction {
-      id
-    }
-    updated_at
   }
 }
     ",
                 Variables = new
                 {
                     
+                    assignee = "UNASSIGNED",
+                    taskStatus = "PUBLISHED"
+
                 }
-    };
+            };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -91,10 +99,39 @@ query Tasks {
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
+            PostTest();
 
         }
 
+        public void PostTest()
+        {
+            JObject obj = JObject.Parse(ReturnString);
+            JArray taskList = (JArray)obj["tasks"];
+            int taskFound = 0;
+
+            foreach (JObject tasks in taskList)
+            {
+                string raw = (string)tasks["id"];
+                int resutlProjectId = Convert.ToInt32(raw);
+
+                if (resutlProjectId == TaskId)
+                {
+                    taskFound++;
+                }
+
+            }
+
+            if (taskFound == 0)
+            {
+                throw new Exception("Task not found");
+            }
+
+            new DeleteTask_Reusable().Invoke(TaskId);
+            new DeleteProject_Reusable().Invoke(ProjectId);
+        }
     }
 
 }

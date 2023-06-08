@@ -1,31 +1,28 @@
 ﻿using GraphQL;
 using GraphQL.Client.Http;
-using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json;
+using NUnit.Framework;
 
 namespace PowerHouse_Api
 {
-    [TestFixture]
-    [Parallelizable]
-    public class Roles
+
+    public class GetAllProposals_Reusable
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ReturnString;
+        public static int OrgId;
+
 
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            ProjectId = b.StringGenerator();
-
-
         }
 
-        [Test]
         public async Task MainTest()
         {
             Precondition();
@@ -33,20 +30,19 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query Roles {
-  roles {
-    created_at
-    name
-    role_id
-    updated_at
+query GetAllProposals($filters: IGetProposalsFilterDTO) {
+  getAllProposals(filters: $filters) {
+    id
   }
 }
     ",
                 Variables = new
                 {
-                    retrieveCardId = "pm_1N9FXqBH08opzuAiGdGSYb47"
-                }
-    };
+                    filters = new {
+                    organization_id = OrgId
+                    }
+        }
+            };
 
             var client = new GraphQLHttpClient(BaseUrl, new NewtonsoftJsonSerializer());
             client.HttpClient.DefaultRequestHeaders.Add("Authorization", AuthToken);
@@ -61,8 +57,16 @@ query Roles {
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
 
+        }
+
+        public string Invoke(int orgId)
+        {
+            OrgId = orgId;
+            MainTest().Wait();
+            return ReturnString;
         }
 
     }

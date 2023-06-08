@@ -3,7 +3,6 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
-using System.Security.Cryptography;
 
 namespace PowerHouse_Api
 {
@@ -11,9 +10,9 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class Prds
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ProjectId;
         public static int OrgId;
 
         public void Precondition()

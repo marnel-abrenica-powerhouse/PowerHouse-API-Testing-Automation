@@ -10,9 +10,9 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class GeneratePossibleInformation
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectDescription;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ProjectDescription;
 
         public void Precondition()
         {

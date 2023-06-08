@@ -10,9 +10,9 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class GetInviteMembers
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ProjectId;
 
         public void Precondition()
         {
