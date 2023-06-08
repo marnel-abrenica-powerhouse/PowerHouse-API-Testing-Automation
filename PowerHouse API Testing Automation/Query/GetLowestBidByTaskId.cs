@@ -3,6 +3,9 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+
 
 namespace PowerHouse_Api
 {
@@ -10,9 +13,20 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class GetLowestBidByTaskId
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ReturnString;
+        public static string Name;
+        public static string Description;
+        public static string ProjectName;
+        public static string ProjectOverview;
+        public static int ProjectId;
+        public static int Payout;
+        public static int MaxTime;
+        public static int TimeEstimate;
+        public static int NewBidPrice;
+        public static int TaskId;
+        public static int BidId;
 
         public void Preconditino()
         {
@@ -20,9 +34,28 @@ namespace PowerHouse_Api
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            ProjectId = b.StringGenerator();
+            Name = b.StringGenerator("alphanumeric", 10);
+            Description = b.StringGenerator("alphanumeric", 50);
+            ProjectName = b.StringGenerator("alphanumeric", 10);
+            ProjectOverview = b.StringGenerator("alphanumeric", 50);
+            Payout = int.Parse(b.StringGenerator("allnumbers", 4));
+            MaxTime = int.Parse(b.StringGenerator("allnumbers", 2));
+            TimeEstimate = int.Parse(b.StringGenerator("allnumbers", 2));
+            NewBidPrice = new CalculateBid().GetMaxBid(Payout-1);
 
+            string returnString = new CreateProject_Reusable().Invoke(ProjectName, ProjectOverview);
+            JObject obj = JObject.Parse(returnString);
+            int projectId = obj["createProject"]["id"].Value<int>();
+            ProjectId = projectId;
 
+            string returnTask = new CreateTask_Reusable().Invoke(Name, Description, ProjectId, Payout, MaxTime, TimeEstimate);
+            JObject objTaskId = JObject.Parse(returnTask);
+            TaskId = objTaskId["createTask"]["task_id"].Value<int>();
+            new PublishTasksToMarketplace_Reusable().Invoke(TaskId);
+
+            string returnBid = new CreateBid_Reusable().Invoke(Convert.ToInt32(NewBidPrice), TaskId);
+            JObject objBid = JObject.Parse(returnBid);
+            BidId = objBid["createBid"]["id"].Value<int>();
         }
 
         [Test]
@@ -53,7 +86,7 @@ query GetLowestBidByTaskId($taskId: Float!) {
     ",
                 Variables = new
                 {
-                    taskId = 101
+                    taskId = TaskId
                 }
             };
 
@@ -70,10 +103,26 @@ query GetLowestBidByTaskId($taskId: Float!) {
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
+            PostTest();
 
         }
+        public void PostTest()
+        {
+            JObject obj = JObject.Parse(ReturnString);
+            int bidId = obj["getLowestBidByTaskId"]["id"].Value<int>();
+            int taskIdReturn = obj["getLowestBidByTaskId"]["task_id"].Value<int>();
 
+            if (bidId != BidId || taskIdReturn != TaskId)
+            {
+                throw new Exception("Api return does not match");
+            }
+
+            new DeleteTask_Reusable().Invoke(TaskId);
+            new DeleteProject_Reusable().Invoke(ProjectId);
+        }
     }
 
 }

@@ -131,10 +131,10 @@ mutation UpdateCodeReviewStatus($submissionId: Float!, $status: StatusSubmission
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
-            VerifyResponse();
+            PostTest();
         }
 
-        public void VerifyResponse()
+        public void PostTest()
         {
 
             JObject obj = JObject.Parse(ReturnString);

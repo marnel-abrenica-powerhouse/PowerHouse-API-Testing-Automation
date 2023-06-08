@@ -1,31 +1,25 @@
 ﻿using GraphQL;
 using GraphQL.Client.Http;
-using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json;
 
 namespace PowerHouse_Api
 {
-    [TestFixture]
-    [Parallelizable]
-    public class Profile
+
+    public class GetSensitiveDataByProjectId_Reusable
     {
         public static string AuthToken;
         public static string BaseUrl;
-        public static int OrgId;
-
+        public static string ReturnString;
+        public static int ProjectId;
         public void Precondition()
         {
-            Commands b = new();
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            OrgId = int.Parse(a.GetConfig_("orgId"));
-
-
         }
 
-        [Test]
         public async Task MainTest()
         {
             Precondition();
@@ -33,31 +27,27 @@ namespace PowerHouse_Api
             var query = new GraphQLRequest
             {
                 Query = @"
-query Profile {
-  profile {
-    first_name
-    last_name
-    avatar
-    bio
-    country
-    created_at
-    expertise {
-      id
+query GetSensitiveDataByProjectId($projectId: Float!) {
+  getSensitiveDataByProjectId(project_id: $projectId) {
+    createdAt
+    data {
+      description
+      key
+      password
+      username
     }
-    linkedin_url
-    profile_id
-    timezone
-    updated_at
-    user {
-      email
-    }
-    user_id
+    id
+    name
+    project_id
+    type
+    updatedAt
   }
 }
     ",
                 Variables = new
                 {
-                    organizationId = OrgId
+                    projectId =  ProjectId
+
                 }
     };
 
@@ -74,10 +64,17 @@ query Profile {
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
 
         }
 
+        public string Invoke(int projectId)
+        {
+            ProjectId = projectId;
+            MainTest().Wait();
+            return ReturnString;
+        }
     }
 
 }

@@ -3,15 +3,18 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace PowerHouse_Api
 { 
     [Parallelizable]
     public class OrganizationIntegrations
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static int OrgId;
+        public static string ReturnString;
 
         public void Precondition()
         {
@@ -19,9 +22,9 @@ namespace PowerHouse_Api
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            ProjectId = b.StringGenerator();
+            OrgId = int.Parse(a.GetConfig_("orgId"));
 
-
+            new UpsertOrganizationIntegrations_Reusable().Invoke(OrgId);
         }
 
         [Test]
@@ -48,7 +51,7 @@ query OrganizationIntegrations($organizationId: Float!) {
     ",
                 Variables = new
                 {
-                    organizationId = 62
+                    organizationId = OrgId
                 }
     };
 
@@ -65,8 +68,30 @@ query OrganizationIntegrations($organizationId: Float!) {
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
+            PostTest();
 
+        }
+
+        public void PostTest()
+        {
+            JObject obj = JObject.Parse(ReturnString);
+            string domain = obj["organizationIntegrations"]["jira_domain"].ToString();
+            string email = obj["organizationIntegrations"]["jira_email"].ToString();
+            string token = obj["organizationIntegrations"]["jira_token"].ToString();
+
+
+            if (
+                    domain != "powerhouse01"
+                || email != "mabrenica.stormblue@gmail.com"
+                || !token.Contains("108C")
+                )
+            {
+                throw new Exception("Api return does not match");
+            }
+      
         }
 
     }

@@ -84,7 +84,7 @@ mutation UpsertOrganizationIntegrations($data: CreateOrganizationIntegrationInpu
 
         public void PostTest()
         {
-            string returnJiraIssues = new GetJiraIssues_Reusable().Invoke(OrgId);
+            new GetJiraIssues_Reusable().Invoke(OrgId);
         }
 
     }

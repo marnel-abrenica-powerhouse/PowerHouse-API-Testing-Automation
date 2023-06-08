@@ -10,9 +10,9 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class ListOrganizations
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static string ProjectId;
 
         public void Precondition()
         {
@@ -21,8 +21,6 @@ namespace PowerHouse_Api
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
             ProjectId = b.StringGenerator();
-
-
         }
 
         [Test]

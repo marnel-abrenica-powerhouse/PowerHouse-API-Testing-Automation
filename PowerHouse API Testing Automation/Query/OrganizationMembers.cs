@@ -4,7 +4,6 @@ using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace PowerHouse_Api
 {
@@ -76,6 +75,7 @@ query OrganizationMembers($organizationId: Float!) {
 
             string jsonString = JsonConvert.SerializeObject(response.Data);
             ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
 
         }
     }

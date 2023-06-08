@@ -3,6 +3,7 @@ using GraphQL.Client.Http;
 using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
+using Newtonsoft.Json.Linq;
 
 namespace PowerHouse_Api
 {
@@ -10,9 +11,11 @@ namespace PowerHouse_Api
     [Parallelizable]
     public class GetChatByProjectId
     {
-        public static String AuthToken;
-        public static String BaseUrl;
-        public static String ProjectId;
+        public static string AuthToken;
+        public static string BaseUrl;
+        public static int ProjectId;
+        public static string ProjectName;
+        public static string ProjectOverview;
 
         public void Precondition()
         {
@@ -20,9 +23,13 @@ namespace PowerHouse_Api
             Get_Update_Config a = new();
             AuthToken = a.GetConfig_("authToken");
             BaseUrl = a.GetConfig_("baseUrl");
-            ProjectId = b.StringGenerator();
+            ProjectName = b.StringGenerator("allletters", 10);
+            ProjectOverview = b.StringGenerator("alphanumeric", 50);
 
-
+            string returnOrg = new CreateProject_Reusable().Invoke(ProjectName, ProjectOverview);
+            JObject orgObj = JObject.Parse(returnOrg);
+            int projectId = orgObj["createProject"]["id"].Value<int>();
+            ProjectId = projectId;
         }
 
         [Test]
@@ -48,7 +55,7 @@ query Task($projectId: Float!) {
     ",
                 Variables = new
                 {
-                    projectId = 69
+                    projectId = ProjectId
                 }
             };
 

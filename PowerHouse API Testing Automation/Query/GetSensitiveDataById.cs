@@ -4,6 +4,9 @@ using NUnit.Framework;
 using GraphQL.Client.Serializer.Newtonsoft;
 using PowerHouse_API_Testing_Automation.AppManager;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Data;
+using System.Xml.Linq;
 
 namespace PowerHouse_Api
 {
@@ -13,6 +16,7 @@ namespace PowerHouse_Api
     {
         public static string AuthToken;
         public static string BaseUrl;
+        public static string ReturnString;
         public static string ProjectName;
         public static string ProjectOverview;
         public static string SensitiveDataName;
@@ -92,12 +96,31 @@ query GetSensitiveDataById($getSensitiveDataByIdId: String!) {
                 throw new Exception("GraphQL request failed.");
             }
 
-            Console.WriteLine(response.Data);
+            string jsonString = JsonConvert.SerializeObject(response.Data);
+            ReturnString = jsonString;
+            Console.WriteLine(ReturnString);
             PostTest();
         }
 
         public void PostTest()
         {
+            JObject obj = JObject.Parse(ReturnString);
+            string name = obj["getSensitiveDataById"]["name"].ToString();
+            string description = obj["getSensitiveDataById"]["data"]["description"].ToString();
+            string key = obj["getSensitiveDataById"]["data"]["key"].ToString();
+            string username = obj["getSensitiveDataById"]["data"]["username"].ToString();
+            string password = obj["getSensitiveDataById"]["data"]["password"].ToString();
+            int projectId = obj["getSensitiveDataById"]["project_id"].Value<int>();
+
+            if (SensitiveDataName != name
+                || InfoDescription != description
+                || Key != key
+                || Username != username
+                || Password != password
+                || ProjectId != projectId)
+            {
+                throw new Exception("Api return does not match");
+            }
             new DeleteSensitiveData_Reusable().Invoke(SensitiveDataId);
             new DeleteProject_Reusable().Invoke(ProjectId);
         }
