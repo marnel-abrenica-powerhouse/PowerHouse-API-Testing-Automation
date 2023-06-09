@@ -18,7 +18,7 @@ namespace PowerHouse_Api
         public static string BaseUrl;
         public static string ReturnString;
         public static int OrgId;
-        public static string Email = "marnel.abrenica.powerhouse@gmail.com";
+        public static string Email = "marnel.abrenica@powerhouse.so";
         public static string MemberType = "PO";
         public static int MemberId;
         public static string InviteId;

@@ -57,7 +57,7 @@ mutation UpsertOrganizationIntegrations($data: CreateOrganizationIntegrationInpu
                         {
                         jira_domain = "powerhouse01",
                         jira_email = "mabrenica.stormblue@gmail.com",
-                        jira_token = "ATATT3xFfGF0GlPrzpFrsVqv8zabWWe8tZ-xQl8h2_2OTSqXa56nBcdn9XIdUxlOEJH6kkY3FynZmk22I1-r-ChQ3BTKoVecDKqg5CMTIAm9jpvG9fPBQW7Eg0tnhtVXEsKz88BOj1f10Ezp5UDbq1GVeobt_C8pfC0CgC5pRaVHfaCs43Xl3hA=C23E108C"
+                        jira_token = "ATATT3xFfGF0VdTIvrgHZ0KHNiC40TODwOOaokBcWNLk8XRjx2B9_RGMKTzYSRtdBHLjOARBvzn1mYJqLLlC8ZdqXxvPm3Vy_8qMaF71_Xn97pEgnrnkBJJRJ54MRhLPxce3s7gTk63wCfUc_mFIyYDu62MfOF2nvtbbcROImWSYu3KlBE4Y6J0=FDB07C1E"
                     },
                     organizationId = OrgId
                 }
