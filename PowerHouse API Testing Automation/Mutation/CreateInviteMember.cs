@@ -17,7 +17,7 @@ namespace PowerHouse_Api
         public static string ReturnString;
         public static int OrgMemberId;
         public static int OrgId;
-        public static string Email = "marnel.abrenica.powerhouse@gmail.com";
+        public static string Email = "marnel.abrenica@powerhouse.so";
         public static string MemberType = "PO";
         public static int MemberId;
 
@@ -89,7 +89,7 @@ mutation CreateInviteMember($data: CreateInviteMemberInput!) {
             string responseMemberType = obj["createInviteMember"]["member_type"].ToString();
 
 
-            if (responseEmail != "marnel.abrenica.powerhouse@gmail.com" || responseMemberType != "PO")
+            if (responseEmail != "marnel.abrenica@powerhouse.so" || responseMemberType != "PO")
             {
                 throw new Exception("Api return does not match");
             }

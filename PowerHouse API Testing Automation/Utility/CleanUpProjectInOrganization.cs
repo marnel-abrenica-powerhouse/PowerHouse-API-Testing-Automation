@@ -12,7 +12,7 @@ namespace PowerHouse_API_Testing_Automation.Utility
     [TestFixture]
     public class CleanUpProjectInOrganization
     {
-        public int OrgId = 276;
+        public int OrgId = 3;
 
         List<int> ProjectIdsInORg = new();
         List <string> SensitiveDataIds = new();
@@ -20,7 +20,7 @@ namespace PowerHouse_API_Testing_Automation.Utility
 
 
 
-        //[Test]
+        [Test]
         public void Execute()
         {
 
